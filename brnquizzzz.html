@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>有機常識問答 · SikGather</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Nunito:wght@500;600;700;800&display=swap');
+
+  :root {
+    --paper: #f7f5e9; --ink: #2c3e2f; --sage: #5a7a62; --sage-dark: #4a6a52;
+    --sage-light: #e8f0e6; --sage-mid: #c5d6c4; --cream: #fbf9ed;
+    --cream-dark: #f3f0dd; --line: #d8ddcc; --correct: #d4e8c8;
+    --incorrect: #f5d6d0; --muted: #6b7c6e; --gold: #c9a227;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: #e8eee4;
+    background-image:
+      linear-gradient(#c8d4c255 1px, transparent 1px),
+      linear-gradient(90deg, #c8d4c255 1px, transparent 1px);
+    background-size: 24px 24px;
+    color: var(--ink);
+    font-family: 'Noto Sans TC', 'Nunito', Arial, sans-serif;
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+
+  .shell {
+    width: 100%; max-width: 480px;
+    background: var(--cream);
+    border: 1px solid #c5d1bc; border-radius: 14px;
+    box-shadow: 0 6px 28px rgba(90,122,98,0.14);
+    overflow: hidden;
+  }
+  .shell-head {
+    background: #f8f6e8; padding: 13px 18px;
+    border-bottom: 1px solid #d8e0cc;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .brand { font-family: Georgia, serif; font-size: 19px; font-weight: bold; color: var(--ink); text-decoration: none; }
+  .brand em { color: #c4784a; font-style: normal; }
+  .head-right { display: flex; align-items: center; gap: 10px; }
+  .tag { font-size: 11px; letter-spacing: 1px; color: #7a8c78; }
+  .btn-ico {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 2px solid #c8e6c9; background: rgba(255,255,255,0.92);
+    font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .quiz-wrap { position: relative; min-height: 640px; }
+
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 26px 20px;
+    background: var(--cream);
+    z-index: 5;
+  }
+  .screen.hidden { display: none; }
+  .screen h1 { font-family: Georgia, 'Noto Sans TC', serif; font-size: 28px; line-height: 1.25; color: var(--ink); margin: 12px 0 8px; }
+  .screen p { color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 320px; }
+  .mascot { font-size: 52px; margin-bottom: 4px; }
+
+  .portrait { width: 176px; height: 220px; animation: float 2.6s ease-in-out infinite; }
+  .portrait.small { width: 64px; height: 80px; animation: none; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+  .btn {
+    border: 1px solid var(--sage); background: var(--sage); color: #fff;
+    padding: 13px 30px; border-radius: 10px;
+    font: 700 15px 'Noto Sans TC', 'Nunito', Arial, sans-serif; cursor: pointer;
+    box-shadow: 0 4px 12px rgba(90,122,98,0.25);
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn:hover { background: var(--sage-dark); }
+  .btn:active { transform: translateY(1px); }
+  .btn.ghost { background: #f0f5ed; color: var(--ink); border-color: #b8c9b4; box-shadow: none; }
+  .btn.ghost:hover { background: #e4eee1; }
+
+  #screen-intro { background: linear-gradient(180deg, #cfe6cf 0%, #eaf2df 55%, #f6f0d8 100%); }
+  .intro-stage {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 20px; height: 100%; width: 100%; padding: 18px;
+  }
+  .intro-skip {
+    position: absolute; top: 12px; right: 12px;
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 2px solid #b8c9b4; background: rgba(255,255,255,0.85);
+    font-size: 16px; cursor: pointer; color: var(--ink);
+  }
+  #dialogue-box {
+    width: 100%; max-width: 400px;
+    background: #fbf9ed; border: 3px solid #5a7a62; border-radius: 14px;
+    padding: 16px 16px 30px; position: relative;
+    box-shadow: 0 8px 24px rgba(46,74,50,0.2); text-align: left;
+  }
+  #dialogue-name {
+    position: absolute; top: -13px; left: 14px;
+    background: #5a7a62; color: #fff;
+    font-weight: 800; font-size: 12px;
+    padding: 3px 12px; border-radius: 999px; letter-spacing: 0.5px;
+  }
+  #dialogue-text { font-size: 15px; line-height: 1.7; color: #2c3e2f; min-height: 76px; margin-top: 2px; }
+  #dialogue-hint { position: absolute; right: 14px; bottom: 8px; color: #5a7a62; font-size: 13px; opacity: 0; }
+  #dialogue-hint.on { opacity: 1; animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 0%,100% { opacity: 0; } 50% { opacity: 1; } }
+
+  #screen-quiz { justify-content: flex-start; padding: 16px 18px; overflow-y: auto; }
+  .quiz-top { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px; }
+  .quiz-companion { display: flex; align-items: center; gap: 8px; }
+  #combo { font-size: 13px; font-weight: 800; color: #c4784a; }
+  .pills { display: flex; gap: 6px; }
+  .pill {
+    background: #fff; border: 2px solid #c8e6c9; border-radius: 999px;
+    padding: 3px 10px; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; gap: 4px;
+  }
+  #progress { width: 100%; height: 8px; background: #e0e8db; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+  #progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--sage), #8fae8f); border-radius: 4px; transition: width 0.3s; }
+  #counter { font-size: 12px; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 12px; }
+
+  .scene { width: 100%; max-width: 400px; perspective: 1000px; margin-bottom: 14px; }
+  .card {
+    position: relative; width: 100%; height: 190px;
+    transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.4,0.2,0.2,1);
+  }
+  .card.flipped { transform: rotateY(180deg); }
+  .face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    border-radius: 14px; padding: 20px 18px;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    border: 1px solid #b8c9b4;
+    box-shadow: 0 4px 14px rgba(90,122,98,0.08);
+    text-align: center;
+  }
+  .face.front { background: var(--cream); }
+  .face.back { background: #eef5eb; transform: rotateY(180deg); }
+  .face-label { font-size: 11px; letter-spacing: 1px; color: var(--sage); margin-bottom: 10px; }
+  #q-text { font: 400 19px/1.45 Georgia, 'Noto Sans TC', serif; color: var(--ink); }
+  #back-label { font-size: 11px; letter-spacing: 1px; color: #c4784a; margin-bottom: 10px; font-weight: 700; }
+  #back-text { font-size: 14px; line-height: 1.65; color: #2e4437; }
+
+  #options { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 9px; margin-bottom: 8px; }
+  .option {
+    background: #f6f4e8; border: 1px solid #d5decc;
+    text-align: left; padding: 13px 14px; font-size: 14px;
+    border-radius: 10px; cursor: pointer;
+    color: var(--ink); line-height: 1.5;
+    font-family: 'Noto Sans TC', 'Nunito', Arial, sans-serif;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+  }
+  .option:hover { background: #eef5eb; border-color: #a8bfa4; }
+  .option:active { transform: scale(0.99); }
+  .option.correct { background: var(--correct); border-color: #8fb88a; font-weight: 700; }
+  .option.incorrect { background: var(--incorrect); border-color: #e0a99a; }
+  .option:disabled { cursor: default; opacity: 1; }
+
+  #feedback { font-size: 13px; font-weight: 700; color: var(--sage-dark); min-height: 20px; margin-bottom: 8px; }
+  #btn-next { margin-top: 2px; }
+
+  #result-confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .confetti { position: absolute; top: -12px; border-radius: 2px; animation: fall linear forwards; }
+  @keyframes fall { to { transform: translateY(680px) rotate(540deg); opacity: 0; } }
+
+  .stat-row { display: flex; gap: 8px; margin: 14px 0 16px; flex-wrap: wrap; justify-content: center; }
+  .stat-box {
+    background: #eef5eb; border: 1px solid #c5d6c4; border-radius: 10px;
+    padding: 9px 13px; min-width: 74px;
+  }
+  .stat-box b { display: block; font-size: 19px; color: var(--ink); font-family: Georgia, serif; }
+  .stat-box span { font-size: 10px; color: var(--muted); }
+
+  #secret-box {
+    width: 100%; max-width: 380px;
+    background: linear-gradient(135deg, #fff8e1, #f5e6b8);
+    border: 2px solid #c9a227; border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 16px;
+    text-align: left; position: relative; overflow: hidden;
+  }
+  #secret-box.hidden { display: none; }
+  #secret-box .lock { font-size: 11px; letter-spacing: 1px; color: #a97f16; font-weight: 800; display: block; margin-bottom: 6px; }
+  #secret-text { font-size: 14px; line-height: 1.65; color: #4a3a12; }
+  #secret-box::after {
+    content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.75), transparent);
+    animation: shine 2.6s infinite;
+  }
+  @keyframes shine { 0% { left: -60%; } 60%,100% { left: 120%; } }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="shell-head">
+    <a class="brand" href="#">♧ SikGather<em>.</em></a>
+    <div class="head-right">
+      <span class="tag">有機常識問答</span>
+      <button class="btn-ico" id="btn-mute" title="聲音">🔊</button>
+    </div>
+  </div>
+
+  <div class="quiz-wrap">
+    <div class="screen" id="screen-start">
+      <canvas class="portrait" id="portrait-start"></canvas>
+      <h1>有機常識問答</h1>
+      <p>和<b>菜心</b>一起測試你的有機知識！</p>
+      <button class="btn" id="btn-start">開始 🧠</button>
+    </div>
+
+    <div class="screen hidden" id="screen-intro">
+      <button class="intro-skip" id="btn-skip" title="跳過">⏭</button>
+      <div class="intro-stage">
+        <canvas class="portrait" id="portrait-intro"></canvas>
+        <div id="dialogue-box">
+          <div id="dialogue-name">菜心妹</div>
+          <div id="dialogue-text"></div>
+          <div id="dialogue-hint">▼ 點擊繼續</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen hidden" id="screen-quiz">
+      <div class="quiz-top">
+        <div class="quiz-companion">
+          <canvas class="portrait small" id="portrait-companion"></canvas>
+          <span id="combo"></span>
+        </div>
+        <div class="pills">
+          <div class="pill">⭐ <span id="score">0</span></div>
+          <div class="pill">⏱ <span id="time">0:00</span></div>
+        </div>
+      </div>
+      <div id="progress"><div id="progress-fill"></div></div>
+      <div id="counter">第 1 題 / 共 10 題</div>
+
+      <div class="scene">
+        <div class="card" id="card">
+          <div class="face front">
+            <span class="face-label">問題卡</span>
+            <h3 id="q-text">載入中…</h3>
+          </div>
+          <div class="face back">
+            <span id="back-label">冷知識！</span>
+            <p id="back-text"></p>
+          </div>
+        </div>
+      </div>
+
+      <div id="options"></div>
+      <div id="feedback"></div>
+      <button class="btn" id="btn-next" style="display:none">下一題 →</button>
+    </div>
+
+    <div class="screen hidden" id="screen-result">
+      <div id="result-confetti"></div>
+      <div class="mascot" id="result-mascot">🎉</div>
+      <h1 id="result-title">完成！</h1>
+      <p id="result-sub"></p>
+      <div class="stat-row">
+        <div class="stat-box"><b id="r-score">0</b><span>分數</span></div>
+        <div class="stat-box"><b id="r-correct">0/10</b><span>答對</span></div>
+        <div class="stat-box"><b id="r-time">0:00</b><span>時間</span></div>
+      </div>
+      <div id="secret-box" class="hidden">
+        <span class="lock">✦ 終極冷知識已解鎖</span>
+        <div id="secret-text"></div>
+      </div>
+      <button class="btn" id="btn-playagain">↺ 再玩一次</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   有機常識問答 · 半正式（書面語）· 進階冷知識
+   ========================================================================= */
+const audio = {
+  ctx: null, enabled: true,
+  init() {
+    if (!this.ctx) { const AC = window.AudioContext || window.webkitAudioContext; if (AC) this.ctx = new AC(); }
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  tone(f, dur = 0.15, type = 'sine', vol = 0.12, delay = 0, slideTo = null) {
+    if (!this.enabled || !this.ctx) return;
+    const t0 = this.ctx.currentTime + delay;
+    const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t0);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    o.connect(g); g.connect(this.ctx.destination);
+    o.start(t0); o.stop(t0 + dur + 0.03);
+  },
+  blip()   { this.tone(740, 0.06, 'square', 0.05); },
+  correct(){ this.tone(784, 0.1, 'triangle', 0.1); this.tone(1046, 0.16, 'triangle', 0.1, 0.08); },
+  wrong()  { this.tone(220, 0.22, 'square', 0.09, 0, 110); },
+  flip()   { this.tone(300, 0.12, 'sine', 0.08, 0, 620); },
+  win()    { [523,659,784,1046,1318,1568].forEach((f,i)=>this.tone(f, 0.2, 'triangle', 0.11, i*0.12)); },
+};
+
+const C4=261.63, D4=293.66, E4=329.63, F4=349.23, G4=392.00, A4=440.00, B4=493.88;
+const C5=523.25, D5=587.33, E5=659.25, G5=783.99, A5=880.00;
+const C3=130.81, F3=174.61, G3=196.00, A3=220.00;
+
+const MUSIC_TRACKS = {
+  intro: { step: 140, wave: 'square', vol: 0.05, dur: 0.09, bassVol: 0.06,
+    melody: [C5, E5, G5, A5, G5, E5, C5, 0, D5, E5, C5, D5, E5, G5, E5, 0],
+    bass:   [C3, 0, C3, 0, A3, 0, F3, 0, G3, 0, G3, 0, C3, G3, C3, 0] },
+  quiz: { step: 250, wave: 'triangle', vol: 0.065, dur: 0.18, bassVol: 0.05,
+    melody: [E4, 0, G4, 0, A4, G4, E4, 0, D4, 0, C4, D4, E4, 0, D4, 0],
+    bass:   [C3, 0, 0, 0, F3, 0, 0, 0, C3, 0, G3, 0, C3, 0, 0, 0] },
+};
+
+const music = {
+  key: null, track: null, step: 0, timer: null,
+  play(key) {
+    const t = MUSIC_TRACKS[key];
+    if (this.key === key && this.timer) return;
+    this.key = key; this.track = t; this.step = 0;
+    this.stop();
+    this.timer = setInterval(() => this.tick(), t.step);
+  },
+  stop() { if (this.timer) { clearInterval(this.timer); this.timer = null; } this.key = null; },
+  tick() {
+    if (!audio.enabled || !audio.ctx || !this.track) return;
+    const t = this.track;
+    const i = this.step % t.melody.length;
+    const f = t.melody[i];
+    if (f > 0) audio.tone(f, t.dur, t.wave, t.vol);
+    const b = t.bass[i % t.bass.length];
+    if (b > 0) audio.tone(b, t.dur * 2, 'triangle', t.bassVol);
+    this.step++;
+  },
+};
+
+/* ---------- 菜心角色（向量繪製） ---------- */
+function drawLeafShape(c, bx, by, ang, len, wid) {
+  c.save();
+  c.translate(bx, by);
+  c.rotate(ang);
+  const g = c.createLinearGradient(0, 0, 0, -len);
+  g.addColorStop(0, '#2f7a44');
+  g.addColorStop(0.55, '#3d9a4a');
+  g.addColorStop(1, '#51b25a');
+  c.beginPath();
+  c.moveTo(0, 0);
+  c.bezierCurveTo(-wid, -len * 0.28, -wid * 0.92, -len * 0.74, 0, -len);
+  c.bezierCurveTo(wid * 0.92, -len * 0.74, wid, -len * 0.28, 0, 0);
+  c.closePath();
+  c.fillStyle = g;
+  c.fill();
+  c.strokeStyle = 'rgba(27,77,36,0.35)';
+  c.lineWidth = Math.max(1, wid * 0.09);
+  c.beginPath();
+  c.moveTo(0, -len * 0.08);
+  c.lineTo(0, -len * 0.82);
+  c.stroke();
+  c.restore();
+}
+
+function drawFlowerShape(c, x, y, s) {
+  c.save();
+  c.translate(x, y);
+  c.fillStyle = '#f5c542';
+  for (let i = 0; i < 5; i++) {
+    const a = i * Math.PI * 2 / 5 - Math.PI / 2;
+    c.beginPath();
+    c.ellipse(Math.cos(a) * s * 0.55, Math.sin(a) * s * 0.55, s * 0.40, s * 0.31, a, 0, Math.PI * 2);
+    c.fill();
+  }
+  c.fillStyle = '#d99a1b';
+  c.beginPath();
+  c.arc(0, 0, s * 0.27, 0, Math.PI * 2);
+  c.fill();
+  c.restore();
+}
+
+function drawPodShape(c, x, y, ang) {
+  c.save();
+  c.translate(x, y);
+  c.rotate(ang);
+  c.fillStyle = '#c9922e';
+  c.beginPath();
+  c.ellipse(0, 0, 13, 6, 0, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = '#e0b24a';
+  c.beginPath();
+  c.ellipse(-3, -1, 7, 3, 0, 0, Math.PI * 2);
+  c.fill();
+  c.restore();
+}
+
+function renderPortrait(cv, mood = 'normal', scale = 11) {
+  const w = 176, h = 220;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = w * dpr;
+  cv.height = h * dpr;
+  const c = cv.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.clearRect(0, 0, w, h);
+
+  c.fillStyle = 'rgba(40,60,40,0.10)';
+  c.beginPath(); c.ellipse(88, 210, 50, 6, 0, 0, Math.PI * 2); c.fill();
+
+  for (const [cx, cy, rx] of [[44, 207, 7], [55, 211, 6], [121, 211, 6], [133, 207, 7]]) {
+    c.fillStyle = '#f5c542';
+    c.beginPath(); c.ellipse(cx, cy, rx, rx * 0.5, 0, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#d99a1b'; c.lineWidth = 1.5; c.stroke();
+  }
+
+  drawLeafShape(c, 88, 140, 0, 80, 27);
+  drawLeafShape(c, 88, 140, -0.42, 74, 25);
+  drawLeafShape(c, 88, 140, 0.42, 74, 25);
+  drawLeafShape(c, 84, 142, -0.85, 70, 24);
+  drawLeafShape(c, 92, 142, 0.85, 70, 24);
+  drawLeafShape(c, 80, 145, -1.28, 66, 24);
+  drawLeafShape(c, 96, 145, 1.28, 66, 24);
+
+  drawPodShape(c, 52, 118, 0.35);
+  drawPodShape(c, 124, 118, -0.35);
+
+  drawFlowerShape(c, 88, 72, 10);
+  drawFlowerShape(c, 71, 88, 9);
+  drawFlowerShape(c, 105, 88, 9);
+  drawFlowerShape(c, 55, 84, 9);
+  drawFlowerShape(c, 121, 84, 9);
+  drawFlowerShape(c, 42, 108, 8);
+  drawFlowerShape(c, 134, 108, 8);
+  drawFlowerShape(c, 64, 110, 7);
+  drawFlowerShape(c, 112, 110, 7);
+  drawFlowerShape(c, 88, 98, 8);
+
+  const bodyGrad = c.createLinearGradient(70, 0, 108, 0);
+  bodyGrad.addColorStop(0, '#dceacb');
+  bodyGrad.addColorStop(0.5, '#eef5e2');
+  bodyGrad.addColorStop(1, '#dceacb');
+  c.fillStyle = bodyGrad;
+  c.beginPath();
+  c.moveTo(70, 200);
+  c.quadraticCurveTo(66, 152, 78, 122);
+  c.quadraticCurveTo(84, 113, 88, 113);
+  c.quadraticCurveTo(92, 113, 98, 122);
+  c.quadraticCurveTo(110, 152, 106, 200);
+  c.quadraticCurveTo(88, 211, 70, 200);
+  c.closePath();
+  c.fill();
+
+  c.strokeStyle = 'rgba(150,175,135,0.55)';
+  c.lineWidth = 1.6;
+  c.beginPath();
+  c.moveTo(80, 198); c.quadraticCurveTo(80, 158, 86, 122);
+  c.moveTo(96, 198); c.quadraticCurveTo(96, 158, 90, 122);
+  c.stroke();
+
+  const eyeY = 156;
+  c.fillStyle = '#ffffff';
+  c.beginPath(); c.ellipse(79, eyeY, 7.5, 8.5, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(97, eyeY, 7.5, 8.5, 0, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#26312b';
+  c.beginPath(); c.arc(79, eyeY, 4.4, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(97, eyeY, 4.4, 0, Math.PI * 2); c.fill();
+  c.fillStyle = '#ffffff';
+  c.beginPath(); c.arc(77.5, eyeY - 1.8, 1.6, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(95.5, eyeY - 1.8, 1.6, 0, Math.PI * 2); c.fill();
+
+  c.fillStyle = 'rgba(255,150,160,0.55)';
+  c.beginPath(); c.ellipse(68, 167, 5.5, 3.5, 0, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(108, 167, 5.5, 3.5, 0, 0, Math.PI * 2); c.fill();
+
+  c.strokeStyle = '#26312b';
+  c.lineWidth = 2.2;
+  c.lineCap = 'round';
+  c.beginPath();
+  if (mood === 'sad') {
+    c.arc(88, 177, 6, 1.15 * Math.PI, 1.85 * Math.PI);
+  } else if (mood === 'happy') {
+    c.arc(88, 169, 8, 0.1 * Math.PI, 0.9 * Math.PI);
+  } else {
+    c.arc(88, 170, 6.5, 0.15 * Math.PI, 0.85 * Math.PI);
+  }
+  c.stroke();
+
+  c.strokeStyle = '#3d9a4a';
+  c.lineWidth = 7;
+  c.lineCap = 'round';
+  c.beginPath(); c.moveTo(73, 170); c.quadraticCurveTo(63, 168, 57, 160); c.stroke();
+  c.fillStyle = '#3d9a4a';
+  c.beginPath(); c.arc(56, 159, 4.2, 0, Math.PI * 2); c.fill();
+
+  c.strokeStyle = '#3d9a4a';
+  c.lineWidth = 7;
+  c.beginPath(); c.moveTo(103, 170); c.quadraticCurveTo(113, 172, 120, 168); c.stroke();
+
+  c.strokeStyle = '#8a5a33';
+  c.lineWidth = 3;
+  c.beginPath(); c.moveTo(122, 172); c.quadraticCurveTo(131, 152, 140, 172); c.stroke();
+  c.fillStyle = '#c9925e';
+  c.beginPath();
+  c.moveTo(120, 170); c.lineTo(142, 170); c.lineTo(138, 192);
+  c.quadraticCurveTo(131, 197, 124, 192);
+  c.closePath(); c.fill();
+  c.strokeStyle = 'rgba(110,70,40,0.5)'; c.lineWidth = 1.2;
+  c.beginPath();
+  c.moveTo(122, 178); c.lineTo(140, 178);
+  c.moveTo(123, 185); c.lineTo(139, 185);
+  c.stroke();
+  c.fillStyle = '#f5c542';
+  for (const [cx, cy] of [[126, 169], [132, 167], [137, 169]]) {
+    c.beginPath(); c.arc(cx, cy, 3.6, 0, Math.PI * 2); c.fill();
+    c.strokeStyle = '#d99a1b'; c.lineWidth = 1; c.stroke();
+  }
+
+  c.fillStyle = '#2f7a44';
+  c.beginPath(); c.ellipse(79, 206, 6, 4, -0.15, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.ellipse(97, 206, 6, 4, 0.15, 0, Math.PI * 2); c.fill();
+}
+
+const DIALOGUE = [
+  { name: '菜心', text: "準備好測試你的有機知識了嗎？🧠" },
+  { name: '菜心', text: "我會問你 10 條關於有機耕種的問題——選擇最正確的答案吧！" },
+  { name: '菜心', text: "答對的話，我就會翻開卡片，和你分享一個有趣的小知識！" },
+  { name: '菜心', text: "答對 7 條（70%），就可以解鎖我的終極冷知識！✨" },
+  { name: '菜心', text: "讓我們看看你的有機知識有多豐富！🌱" },
+];
+let dialogueIdx = 0, typing = false, typeTimer = null;
+
+function typeDialogue() {
+  const line = DIALOGUE[dialogueIdx];
+  $('dialogue-name').textContent = line.name;
+  $('dialogue-text').textContent = '';
+  $('dialogue-hint').classList.remove('on');
+  let i = 0;
+  typing = true;
+  clearInterval(typeTimer);
+  typeTimer = setInterval(() => {
+    i++;
+    $('dialogue-text').textContent = line.text.slice(0, i);
+    if (i % 3 === 0) audio.blip();
+    if (i >= line.text.length) {
+      clearInterval(typeTimer);
+      typing = false;
+      $('dialogue-hint').classList.add('on');
+    }
+  }, 24);
+}
+function beginDialogue() {
+  dialogueIdx = 0;
+  setScreen('intro');
+  music.play('intro');
+  typeDialogue();
+}
+function advanceDialogue() {
+  audio.init();
+  if (typing) {
+    clearInterval(typeTimer);
+    $('dialogue-text').textContent = DIALOGUE[dialogueIdx].text;
+    typing = false;
+    $('dialogue-hint').classList.add('on');
+    return;
+  }
+  dialogueIdx++;
+  if (dialogueIdx < DIALOGUE.length) typeDialogue();
+  else startQuiz();
+}
+
+const QUESTIONS = [
+  {
+    q: "有機耕種最重要的重點是什麼？",
+    options: [
+      "使用化學肥料令產量最高",
+      "耕種時照顧泥土和生態",
+      "只在大廈內種植蔬菜",
+      "只使用重型機器",
+    ],
+    correct: 1,
+    explain: "一茶匙健康的泥土裡，所含的微生物數量比地球上的人口還要多！有機耕種就是要養活這群看不見的「地下大軍」。",
+  },
+  {
+    q: "以下哪一種是天然又有機的防蟲方法？",
+    options: [
+      "噴灑廣譜的化學農藥",
+      "鼓勵瓢蟲等益蟲來幫忙",
+      "為植物注射抗生素",
+      "整塊田全年不種植",
+    ],
+    correct: 1,
+    explain: "一隻瓢蟲一生可以吃掉多達 5,000 隻蚜蟲！有機農夫會種花吸引這些天然的「除蟲小隊」。",
+  },
+  {
+    q: "堆肥對泥土有什麼好處？",
+    options: [
+      "增加養分和改善泥土結構",
+      "令泥土變成無菌",
+      "抽走泥土所有水分",
+      "令泥土變成塑膠",
+    ],
+    correct: 0,
+    explain: "堆肥堆裡的微生物會產生熱量，中心溫度可高達 60°C 以上，連雜草種子和病菌都會被「焗熟」！",
+  },
+  {
+    q: "為什麼有機農夫要輪作（輪流種植不同作物）？",
+    options: [
+      "令農場看起來整齊一些",
+      "打斷害蟲週期和補充養分",
+      "每塊土地只使用一次",
+      "不用澆水",
+    ],
+    correct: 1,
+    explain: "豆科植物的根部能與根瘤菌合作，把空氣中的氮固定到泥土裡，等於天然施肥，所以輪作時常會種豆。",
+  },
+  {
+    q: "為什麼本地有機蔬菜通常會新鮮一些？",
+    options: [
+      "由田間到餐桌的路程較短",
+      "冷藏了幾個月才出售",
+      "人工添加了色素",
+      "煮食前不用清洗",
+    ],
+    correct: 0,
+    explain: "蔬菜收割後仍會呼吸，維生素會隨時間流失——本地菜路程短，可能比長途運輸的菜保留多幾倍的維生素！",
+  },
+  {
+    q: "蚯蚓對有機農田有什麼貢獻？",
+    options: [
+      "吃掉作物的根",
+      "疏鬆泥土和製造肥沃糞土",
+      "傳播化學農藥",
+      "令泥土乾旱龜裂",
+    ],
+    correct: 1,
+    explain: "蚯蚓是「大自然的犁」——牠們鑽洞能讓空氣和水進入泥土，排出的糞土更是上佳的天然肥料。",
+  },
+  {
+    q: "有機耕種通常用什麼方法防治雜草？",
+    options: [
+      "覆蓋物和人工除草",
+      "大量噴灑除草劑",
+      "完全放任不管",
+      "用火燒整片田",
+    ],
+    correct: 0,
+    explain: "有機農夫常用稻草、黑膠膜等覆蓋泥土，既能抑制雜草，又能保水和保護泥土。",
+  },
+  {
+    q: "為什麼要保護蜜蜂等傳粉昆蟲？",
+    options: [
+      "牠們只會咬人",
+      "很多作物要靠牠們授粉才有收成",
+      "牠們會吃掉農作物",
+      "牠們沒有用途",
+    ],
+    correct: 1,
+    explain: "全球約三分之一的食物都依賴蜜蜂等傳粉昆蟲授粉——沒有牠們，很多蔬果根本結不成。",
+  },
+  {
+    q: "「有機」標籤通常代表什麼？",
+    options: [
+      "生產過程禁用合成農藥和化肥",
+      "食物一定比較甜",
+      "可以放很久都不壞",
+      "全部都是空運進口",
+    ],
+    correct: 0,
+    explain: "「有機」主要是指生產方式——不依賴合成農藥、化肥，而是靠生態方法耕種。",
+  },
+  {
+    q: "本地種植對環境有什麼好處？",
+    options: [
+      "增加長途運輸的碳排放",
+      "縮短食物里程、減少碳足跡",
+      "一定要用更多包裝",
+      "蔬菜會自動變貴",
+    ],
+    correct: 1,
+    explain: "食物由田間到餐桌的路程越短，運輸和冷藏所用的能源越少，碳足跡自然較低。",
+  },
+];
+
+const SECRET = "地球上多達四分之一的生物都生活在泥土裡——有機耕種靠輪作和堆肥守護這片「地下世界」，而由田間到餐桌的路程越短，你吃到的菜就越新鮮！";
+
+let state = 'start';
+let qIdx = 0, score = 0, streak = 0, correctCount = 0, answered = false;
+let elapsed = 0, quizTimer = null;
+
+function startQuizTimer() {
+  elapsed = 0;
+  clearInterval(quizTimer);
+  quizTimer = setInterval(() => {
+    elapsed++;
+    $('time').textContent = fmt(elapsed);
+  }, 1000);
+}
+function setMood(mood) { renderPortrait($('portrait-companion'), mood, 4); }
+
+function loadQuestion() {
+  answered = false;
+  const q = QUESTIONS[qIdx];
+  $('q-text').textContent = q.q;
+  $('back-label').textContent = '冷知識！';
+  $('back-text').textContent = q.explain;
+  $('card').classList.remove('flipped');
+  $('btn-next').style.display = 'none';
+  $('feedback').textContent = '';
+  $('counter').textContent = `第 ${qIdx + 1} 題 / 共 ${QUESTIONS.length} 題`;
+  $('progress-fill').style.width = `${(qIdx / QUESTIONS.length) * 100}%`;
+  $('combo').textContent = streak >= 2 ? `🔥 連中 ${streak} 題` : '';
+  setMood('normal');
+
+  const opts = $('options');
+  opts.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'option';
+    b.textContent = opt;
+    b.onclick = () => selectOption(i, b);
+    opts.appendChild(b);
+  });
+}
+
+function selectOption(i, btn) {
+  if (answered) return;
+  answered = true;
+  const q = QUESTIONS[qIdx];
+  const all = document.querySelectorAll('.option');
+  all.forEach(b => b.disabled = true);
+
+  if (i === q.correct) {
+    btn.classList.add('correct');
+    streak++; correctCount++;
+    const pts = 10 + (streak >= 2 ? 5 : 0);
+    score += pts;
+    setMood('happy');
+    $('feedback').textContent = `菜心：答對了！+${pts} 分 🌱`;
+    audio.correct();
+  } else {
+    btn.classList.add('incorrect');
+    all[q.correct].classList.add('correct');
+    streak = 0;
+    setMood('sad');
+    $('feedback').textContent = "菜心：哎呀！正確答案是……";
+    audio.wrong();
+  }
+  $('score').textContent = score;
+  $('combo').textContent = streak >= 2 ? `🔥 連中 ${streak} 題` : '';
+
+  setTimeout(() => {
+    $('card').classList.add('flipped');
+    audio.flip();
+    setTimeout(() => { $('btn-next').style.display = ''; }, 300);
+  }, 700);
+}
+
+function next() {
+  qIdx++;
+  if (qIdx < QUESTIONS.length) loadQuestion();
+  else showResult();
+}
+
+function showResult() {
+  clearInterval(quizTimer);
+  music.stop();
+  state = 'result';
+  const total = QUESTIONS.length;
+  const need = Math.ceil(total * 0.7);   // 7 條（70%）
+  const perfect = correctCount === total;
+  const unlocked = correctCount >= need;
+
+  if (perfect) {
+    $('result-mascot').textContent = '🎉';
+    $('result-title').textContent = '滿分！終極冷知識解鎖！✨';
+    $('result-sub').textContent = '你真是有機達人！';
+  } else if (unlocked) {
+    $('result-mascot').textContent = '🎉';
+    $('result-title').textContent = '過關！終極冷知識解鎖！✨';
+    $('result-sub').textContent = `你答對 ${correctCount}/${total}，達成 70% 解鎖秘密！`;
+  } else {
+    $('result-mascot').textContent = '🌱';
+    $('result-title').textContent = '差一點！';
+    $('result-sub').textContent = `你答對 ${correctCount}/${total}——答對 7 條（70%）才能解鎖秘密！`;
+  }
+
+  $('r-score').textContent = score;
+  $('r-correct').textContent = `${correctCount}/${total}`;
+  $('r-time').textContent = fmt(elapsed);
+
+  if (unlocked) {
+    $('secret-box').classList.remove('hidden');
+    $('secret-text').textContent = SECRET;
+    audio.win();
+    spawnConfetti();
+  } else {
+    $('secret-box').classList.add('hidden');
+  }
+  setScreen('result');
+}
+
+function spawnConfetti() {
+  const box = $('result-confetti');
+  box.innerHTML = '';
+  const colors = ['#5a7a62','#c9a227','#c4784a','#d96a4a','#43a047','#5bb7e5'];
+  for (let i = 0; i < 40; i++) {
+    const s = document.createElement('span');
+    s.className = 'confetti';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.background = colors[i % colors.length];
+    s.style.animationDelay = (Math.random() * 1.2) + 's';
+    s.style.animationDuration = (1.6 + Math.random() * 1.5) + 's';
+    s.style.width = s.style.height = (5 + Math.random() * 6) + 'px';
+    box.appendChild(s);
+  }
+  setTimeout(() => box.innerHTML = '', 4000);
+}
+
+function resetQuiz() {
+  qIdx = 0; score = 0; streak = 0; correctCount = 0;
+  state = 'quiz';
+  setScreen('quiz');
+  $('score').textContent = 0;
+  music.play('quiz');
+  startQuizTimer();
+  loadQuestion();
+}
+function startQuiz() { clearInterval(typeTimer); resetQuiz(); }
+
+const $ = id => document.getElementById(id);
+function fmt(sec) {
+  const s = Math.floor(sec);
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+function setScreen(name) {
+  for (const s of ['start', 'intro', 'quiz', 'result']) {
+    $('screen-' + s).classList.toggle('hidden', s !== name);
+  }
+}
+function toggleMute() {
+  audio.enabled = !audio.enabled;
+  $('btn-mute').textContent = audio.enabled ? '🔊' : '🔇';
+  if (audio.enabled) audio.init();
+}
+
+$('btn-start').addEventListener('click', () => { audio.init(); beginDialogue(); });
+$('btn-skip').addEventListener('click', startQuiz);
+$('screen-intro').addEventListener('click', advanceDialogue);
+$('btn-next').addEventListener('click', () => { audio.init(); next(); });
+$('btn-playagain').addEventListener('click', () => { audio.init(); resetQuiz(); });
+$('btn-mute').addEventListener('click', toggleMute);
+
+window.addEventListener('keydown', e => {
+  if (state === 'intro') {
+    if (e.key === 'Enter' || e.key === ' ') { advanceDialogue(); e.preventDefault(); }
+    else if (e.key === 'Escape') { startQuiz(); e.preventDefault(); }
+    return;
+  }
+  if (state === 'quiz') {
+    if (!answered && ['1','2','3','4'].includes(e.key)) {
+      const i = +e.key - 1;
+      const btns = document.querySelectorAll('.option');
+      if (btns[i]) selectOption(i, btns[i]);
+    } else if (answered && (e.key === 'Enter' || e.key === ' ')) { next(); e.preventDefault(); }
+  } else if (state === 'result' && (e.key === 'Enter' || e.key === ' ')) { resetQuiz(); e.preventDefault(); }
+});
+
+renderPortrait($('portrait-start'));
+renderPortrait($('portrait-intro'));
+renderPortrait($('portrait-companion'), 'normal', 4);
+</script>
+</body>
+</html>
